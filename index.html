@@ -6,45 +6,41 @@
 <title>PickleTurf</title>
 
 <style>
-:root {
-    --bg:#ffffff; --card:#f5f5f5; --accent:#F2C94C;
-    --accent-dark:#E0B83E; --text:#000000; --muted:#6b7280; --danger:#EF4444;
+:root{
+--bg:#ffffff;--card:#f5f5f5;--accent:#F2C94C;--danger:#EF4444;
 }
 *{box-sizing:border-box;font-family:system-ui}
-body{margin:0;background:var(--bg);color:var(--text);padding:1rem}
-#splash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:9999}
-#splash img{width:200px}
+body{margin:0;background:var(--bg);padding:1rem}
 .logo{text-align:center;margin-bottom:.5rem}
 .logo img{width:160px}
-nav{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
-nav button{flex:1;background:#e5e7eb;color:#000;border-radius:10px}
-.card{background:var(--card);padding:1rem;border-radius:14px;margin-bottom:1rem;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
-input,select,button{width:100%;padding:.7rem;border-radius:10px;border:1px solid #d1d5db;margin:.3rem 0}
+nav{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+nav button{flex:1;background:#e5e7eb;border-radius:10px}
+.card{background:var(--card);padding:1rem;border-radius:14px;margin-bottom:1rem}
+input,select,button{width:100%;padding:.6rem;border-radius:10px;border:1px solid #d1d5db;margin:.25rem 0}
 button{background:var(--accent);font-weight:700}
 button.danger{background:var(--danger);color:#fff}
 .flex{display:flex;gap:.5rem;flex-wrap:wrap}
 .badge{padding:.2rem .6rem;border-radius:999px;font-size:.75rem}
-.paid{background:var(--accent-dark)}
-.notpaid{background:#f59e0b}
+.paid{background:#86efac}
+.notpaid{background:#fde68a}
 .hidden{display:none}
-.small-label{font-size:.75rem;color:#374151}
-.player-item{cursor:pointer;padding:.3rem;border-bottom:1px solid #d1d5db}
+.player-item{padding:.3rem;cursor:pointer}
 .player-item:hover{background:#e5e7eb}
-.timeout-input{width:80px;margin-right:.5rem}
+.small{font-size:.75rem;color:#374151}
+canvas{width:100%;max-height:240px}
 </style>
 </head>
 
 <body>
 
-<div id="splash"><img src="logo.png"></div>
 <div class="logo"><img src="logo.png"></div>
 
 <nav>
-    <button onclick="show('rentals')">Rentals</button>
-    <button onclick="show('unpaid')">Today's Unpaid</button>
-    <button onclick="show('summary')">Summary</button>
-    <button onclick="show('trend')">Trend</button>
-    <button onclick="show('players')">Players</button>
+<button onclick="show('rentals')">Rentals</button>
+<button onclick="show('unpaid')">Today's Unpaid</button>
+<button onclick="show('summary')">Summary</button>
+<button onclick="show('trend')">Trend</button>
+<button onclick="show('players')">Players</button>
 </nav>
 
 <!-- RENTALS -->
@@ -53,37 +49,33 @@ button.danger{background:var(--danger);color:#fff}
 
 <label>Player</label>
 <input id="player" placeholder="Type player name">
-<div id="playerList" style="background:#ffffff;max-height:150px;overflow-y:auto;"></div>
+<div id="playerList"></div>
 
-<label>Court & Time</label>
+<label>Court</label>
+<select id="court">
+<option>Court 1</option><option>Court 2</option><option>Court 3</option>
+<option>Court 4</option><option>Court 5</option>
+</select>
+
 <div class="flex">
-    <select id="court">
-        <option>Court 1</option>
-        <option>Court 2</option>
-        <option>Court 3</option>
-        <option>Court 4</option>
-        <option>Court 5</option>
-    </select>
-
-    <div style="flex:1">
-        <div class="small-label">Time In</div>
-        <input type="time" id="timeIn" required>
-    </div>
-
-    <div style="flex:1">
-        <div class="small-label">Time Out</div>
-        <input type="time" id="timeOut" required>
-    </div>
+<div style="flex:1">
+<div class="small">Time In</div>
+<input type="time" id="timeIn" required>
+</div>
+<div style="flex:1">
+<div class="small">Time Out</div>
+<input type="time" id="timeOut" required>
+</div>
 </div>
 
 <label>Payment Method</label>
 <select id="method">
-    <option>Cash</option>
-    <option>GCash</option>
+<option>Cash</option>
+<option>GCash</option>
 </select>
 
-<label>Coach Fee</label>
-<input type="number" id="coachFee" placeholder="Optional">
+<label>Coach Fee (optional)</label>
+<input type="number" id="coachFee">
 
 <label><input type="checkbox" id="paid"> Mark as Paid</label>
 
@@ -103,9 +95,9 @@ button.danger{background:var(--danger);color:#fff}
 <div id="summary" class="card hidden">
 <h3>Summary</h3>
 <select onchange="renderSummary(this.value)">
-    <option value="daily">Daily</option>
-    <option value="weekly">Weekly</option>
-    <option value="monthly">Monthly</option>
+<option value="daily">Daily</option>
+<option value="weekly">Weekly</option>
+<option value="monthly">Monthly</option>
 </select>
 <div id="summaryData"></div>
 </div>
@@ -121,14 +113,11 @@ button.danger{background:var(--danger);color:#fff}
 <h3>Players</h3>
 <input id="searchPlayer" placeholder="Search player">
 <div id="playerManageList"></div>
-<div id="playerManageProfile"></div>
 <hr>
-<button class="danger" onclick="clearAllPlayers()">Clear All Data</button>
+<button class="danger" onclick="clearAll()">Clear All Data</button>
 </div>
 
 <script>
-setTimeout(()=>splash.style.display="none",1500)
-
 const KEY="pickleturf"
 const load=()=>JSON.parse(localStorage.getItem(KEY))||[]
 const save=d=>localStorage.setItem(KEY,JSON.stringify(d))
@@ -139,230 +128,140 @@ document.getElementById(id).classList.remove("hidden")
 if(id==="trend") drawChart()
 }
 
-// AUTOCOMPLETE FUNCTION (shared for rentals & players)
-function autocomplete(inputElem, listContainer, callback){
-    inputElem.addEventListener("input", ()=>{
-        const val = inputElem.value.trim().toLowerCase()
-        const data = load()
-        const uniquePlayers = [...new Set(data.map(r=>r.player))]
-        listContainer.innerHTML=""
-        uniquePlayers
-            .filter(p=>p.toLowerCase().includes(val))
-            .forEach(p=>{
-                const div = document.createElement("div")
-                div.textContent = p
-                div.className="player-item"
-                div.onclick=()=>{inputElem.value=p; listContainer.innerHTML=""; if(callback) callback(p)}
-                listContainer.appendChild(div)
-            })
-    })
+/* AUTOCOMPLETE (shared) */
+function playerAuto(input, listEl){
+input.addEventListener("input",()=>{
+const v=input.value.toLowerCase()
+listEl.innerHTML=""
+[...new Set(load().map(r=>r.player))]
+.filter(p=>p.toLowerCase().includes(v))
+.forEach(p=>{
+const d=document.createElement("div")
+d.textContent=p; d.className="player-item"
+d.onclick=()=>{input.value=p; listEl.innerHTML=""}
+listEl.appendChild(d)
+})
+})
 }
+playerAuto(player,playerList)
 
-// Rentals autocomplete
-autocomplete(document.getElementById("player"), document.getElementById("playerList"))
-
-// Players tab autocomplete
-autocomplete(document.getElementById("searchPlayer"), document.getElementById("playerManageList"), showPlayerManageProfile)
-
-// ADD RENTAL
+/* ADD RENTAL */
 function addRental(){
-const name=player.value.trim()
-if(!name) return alert("Player required")
-if(!timeIn.value || !timeOut.value) return alert("Time In and Time Out required")
-
-const start=new Date()
-const [hin,min]=timeIn.value.split(":")
-start.setHours(hin,min)
-
-const end=new Date(start)
-const [hout,mout]=timeOut.value.split(":")
-end.setHours(hout,mout)
+if(!player.value||!timeIn.value||!timeOut.value) return alert("Time In and Out required")
 
 const d=load()
+const s=new Date(), e=new Date()
+const [h1,m1]=timeIn.value.split(":")
+const [h2,m2]=timeOut.value.split(":")
+s.setHours(h1,m1); e.setHours(h2,m2)
+
 d.push({
-id:Date.now(),
-player:name,
-court:court.value,
-method:method.value,
-coachFee:Number(coachFee.value)||0,
-paid:paid.checked,
-timeIn:start.toISOString(),
-timeOut:end.toISOString()
+id:Date.now(),player:player.value,court:court.value,
+method:method.value,coachFee:+coachFee.value||0,
+paid:paid.checked,timeIn:s.toISOString(),timeOut:e.toISOString()
 })
 save(d)
-
-player.value=""
-timeIn.value=""
-timeOut.value=""
-coachFee.value=""
-paid.checked=false
+player.value=""; timeIn.value=""; timeOut.value=""; coachFee.value=""; paid.checked=false
 render()
 }
 
-// FEE CALCULATION
+/* FEE CALC */
 function fee(r){
-if(!r.timeOut) return 0
-const s=new Date(r.timeIn)
-const e=new Date(r.timeOut)
+const s=new Date(r.timeIn), e=new Date(r.timeOut)
 const mins=(e-s)/60000
-let total=mins<=30?50:100
-
-// Night fee: +20 per hour if past 6pm
+let total=Math.ceil(mins/30)*50
 let t=new Date(s)
-while(t<e){
-if(t.getHours()>=18) total+=20
-t.setHours(t.getHours()+1)
-}
-
+while(t<e){ if(t.getHours()>=18) total+=20; t.setHours(t.getHours()+1) }
 return total+(r.coachFee||0)
-}function fee(r){
-    if(!r.timeOut) return 0;
-    const s = new Date(r.timeIn);
-    const e = new Date(r.timeOut);
-    const diffMins = (e - s) / 60000; // total minutes
-
-    // Base fee: 50 per 30 minutes
-    const halfHours = Math.ceil(diffMins / 30);
-    let total = halfHours * 50;
-
-    // Night fee: 20 per hour if past 6 PM
-    let t = new Date(s);
-    while(t < e){
-        if(t.getHours() >= 18) total += 20;
-        t.setHours(t.getHours() + 1);
-    }
-
-    // Add coach fee if any
-    return total + (r.coachFee || 0);
 }
 
-// MARK PAID
-function markPaid(id){
-const d=load()
-d.find(r=>r.id===id).paid=true
-save(d)
+/* DELETE */
+function deleteRental(id){
+if(confirm("Delete this rental?")){
+save(load().filter(r=>r.id!==id))
 render()
 }
+}
 
-// RENDER RENTALS & TODAY UNPAID
+/* MARK PAID */
+function markPaid(id){
+const d=load(); d.find(r=>r.id===id).paid=true; save(d); render()
+}
+
+/* RENDER */
 function render(){
-const d=load()
-const rentalList=document.getElementById("rentalList")
-const todayUnpaidElem=document.getElementById("todayUnpaid")
-rentalList.innerHTML=""
-todayUnpaidElem.innerHTML=""
+rentalList.innerHTML=""; todayUnpaid.innerHTML=""
 const today=new Date().toDateString()
 
-d.forEach(r=>{
+load().forEach(r=>{
 rentalList.innerHTML+=`
 <div>
 <strong>${r.player}</strong> | ${r.court} | ₱${fee(r)}
 <span class="badge ${r.paid?'paid':'notpaid'}">${r.paid?'Paid':'Unpaid'}</span>
+<div class="flex">
+${!r.paid?`<button onclick="markPaid(${r.id})">Mark Paid</button>`:""}
+<button class="danger" onclick="deleteRental(${r.id})">Delete</button>
+</div>
 </div><hr>`
 
 if(!r.paid && new Date(r.timeIn).toDateString()===today){
-todayUnpaidElem.innerHTML+=`
+todayUnpaid.innerHTML+=`
 <div class="flex">
-<div><strong>${r.player}</strong><br>${r.court} | ₱${fee(r)}</div>
-<button onclick="markPaid(${r.id})">Mark Paid</button>
+<div>${r.player}<br>${r.court} | ₱${fee(r)}</div>
+<div class="flex">
+<button onclick="markPaid(${r.id})">Paid</button>
+<button class="danger" onclick="deleteRental(${r.id})">Delete</button>
+</div>
 </div><hr>`
 }
 })
-
-if(!todayUnpaidElem.innerHTML) todayUnpaidElem.innerHTML="None 🎉"
+if(!todayUnpaid.innerHTML) todayUnpaid.innerHTML="None 🎉"
 }
 
-// SUMMARY
+/* SUMMARY */
 function renderSummary(type){
-const d=load()
 let start=new Date()
 if(type==="weekly") start.setDate(start.getDate()-7)
 if(type==="monthly") start.setMonth(start.getMonth()-1)
-let total=0,paid=0
-d.forEach(r=>{
+let t=0,p=0
+load().forEach(r=>{
 if(!r.timeOut) return
-const t=new Date(r.timeIn)
-if(type==="daily" && t.toDateString()!==new Date().toDateString()) return
-if(type!=="daily" && t<start) return
-const f=fee(r)
-total+=f; if(r.paid) paid+=f
+const d=new Date(r.timeIn)
+if(type==="daily"&&d.toDateString()!==new Date().toDateString())return
+if(type!=="daily"&&d<start)return
+const f=fee(r); t+=f; if(r.paid)p+=f
 })
-summaryData.innerHTML=`Total ₱${total}<br>Paid ₱${paid}<br>Unpaid ₱${total-paid}`
+summaryData.innerHTML=`Total ₱${t}<br>Paid ₱${p}<br>Unpaid ₱${t-p}`
 }
 
-// TREND CHART
+/* TREND */
 function drawChart(){
 const ctx=chart.getContext("2d")
 ctx.clearRect(0,0,chart.width,chart.height)
-
-const d=load(), m={}
-d.forEach(r=>{
+const m={}
+load().forEach(r=>{
 if(!r.timeOut) return
 const k=new Date(r.timeIn).toLocaleString("default",{month:"short"})
 m[k]=(m[k]||0)+fee(r)
 })
-
 const keys=Object.keys(m).slice(-6)
 const max=Math.max(...Object.values(m),1)
-
 keys.forEach((k,i)=>{
-const h=m[k]/max*150
-const x=40+i*50
+const h=m[k]/max*150, x=40+i*50
 ctx.fillStyle="#F2C94C"
 ctx.fillRect(x,180-h,30,h)
 ctx.fillStyle="#000"
 ctx.fillText(`₱${m[k]}`,x-5,170-h)
 ctx.fillText(k,x,200)
-
-chart.onclick=e=>{
-const r=chart.getBoundingClientRect()
-const mx=e.clientX-r.left
-if(mx>=x && mx<=x+30) alert(`${k} Total: ₱${m[k]}`)
-}
 })
 }
 
-// PLAYER MANAGEMENT
-function showPlayerManageProfile(playerName){
-const data=load().filter(r=>r.player.toLowerCase()===playerName.toLowerCase())
-if(!data.length){document.getElementById("playerManageProfile").innerHTML="No data"; return}
-let total=0,paid=0,games=0
-data.forEach(r=>{
-if(r.timeOut){games++; const f=fee(r); total+=f; if(r.paid) paid+=f}
-})
-document.getElementById("playerManageProfile").innerHTML=`
-<strong>${playerName}</strong><br>
-Total Games: ${games}<br>
-Total Spent: ₱${total}<br>
-Paid: ₱${paid}<br>
-Unpaid: ₱${total-paid}<br><br>
-<button class="danger" onclick="deletePlayer('${playerName}'); showPlayerManageProfile('${playerName}')">Delete Player</button>
-<button onclick="mergePlayer('${playerName}'); showPlayerManageProfile('${playerName}')">Merge Duplicates</button>
-`
-}
+/* PLAYERS */
+playerAuto(searchPlayer,playerManageList)
 
-// DELETE & MERGE
-function deletePlayer(name){
-if(confirm("Delete all records for "+name+"?")){
-let d=load().filter(r=>r.player.toLowerCase()!==name.toLowerCase())
-save(d); render()
-}
-}
-
-function mergePlayer(name){
-const d=load()
-const duplicates=d.filter(r=>r.player.toLowerCase()===name.toLowerCase())
-if(duplicates.length<=1){alert("No duplicates"); return}
-for(let i=1;i<duplicates.length;i++) d.splice(d.indexOf(duplicates[i]),1)
-save(d); render(); alert("Duplicates merged")
-}
-
-// CLEAR ALL
-function clearAllPlayers(){
-if(confirm("⚠️ This will remove ALL data. Continue?")){
-localStorage.removeItem(KEY)
-render()
-document.getElementById("playerManageProfile").innerHTML=""
+function clearAll(){
+if(confirm("⚠️ This will delete ALL data. Continue?")){
+localStorage.removeItem(KEY); render()
 }
 }
 
