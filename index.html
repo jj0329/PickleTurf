@@ -6,263 +6,377 @@
 <title>PickleTurf</title>
 
 <style>
-:root{
---bg:#ffffff;--card:#f5f5f5;--accent:#F2C94C;--danger:#EF4444;
+:root {
+    --bg:#ffffff; --card:#f5f5f5; --accent:#F2C94C;
+    --accent-dark:#E0B83E; --text:#000000; --muted:#6b7280; --danger:#EF4444;
 }
 *{box-sizing:border-box;font-family:system-ui}
-body{margin:0;background:var(--bg);padding:1rem}
+body{margin:0;background:var(--bg);color:var(--text);padding:1rem}
+#splash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:9999}
+#splash img{width:200px}
 .logo{text-align:center;margin-bottom:.5rem}
 .logo img{width:160px}
-nav{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
-nav button{flex:1;background:#e5e7eb;border-radius:10px}
-.card{background:var(--card);padding:1rem;border-radius:14px;margin-bottom:1rem}
-input,select,button{width:100%;padding:.6rem;border-radius:10px;border:1px solid #d1d5db;margin:.25rem 0}
-button{background:var(--accent);font-weight:700}
+nav{display:flex;gap:.3rem;margin-bottom:1rem;flex-wrap:wrap}
+nav button{flex:1; min-width: 80px; background:#e5e7eb;color:#000;border-radius:10px; border:none; padding: 8px; cursor:pointer; font-size: 0.85rem;}
+.card{background:var(--card);padding:1rem;border-radius:14px;margin-bottom:1rem;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+input,select,button{width:100%;padding:.7rem;border-radius:10px;border:1px solid #d1d5db;margin:.3rem 0}
+button{background:var(--accent);font-weight:700; cursor:pointer; border:none;}
 button.danger{background:var(--danger);color:#fff}
-.flex{display:flex;gap:.5rem;flex-wrap:wrap}
+button.secondary{background:#d1d5db; color:#000}
+.flex{display:flex;gap:.5rem;flex-wrap:wrap; align-items: center;}
 .badge{padding:.2rem .6rem;border-radius:999px;font-size:.75rem}
-.paid{background:#86efac}
-.notpaid{background:#fde68a}
+.paid{background:var(--accent-dark)}
+.notpaid{background:#f59e0b}
 .hidden{display:none}
-.player-item{padding:.3rem;cursor:pointer}
+.small-label{font-size:.75rem;color:#374151}
+.player-item{cursor:pointer;padding:.3rem;border-bottom:1px solid #d1d5db}
 .player-item:hover{background:#e5e7eb}
-.small{font-size:.75rem;color:#374151}
-canvas{width:100%;max-height:240px}
+.rental-row{display:flex; justify-content: space-between; align-items: center; padding: 0.8rem 0; border-bottom: 1px solid #ddd;}
+.action-btns{display:flex; gap: 5px;}
+.edit-btn{width:auto; padding: 5px 10px; font-size: 0.8rem; background: #e5e7eb;}
+.del-btn{width:auto; padding: 5px 10px; font-size: 0.8rem; background: var(--danger); color: white;}
 </style>
 </head>
 
 <body>
 
+<div id="splash"><img src="logo.png"></div>
 <div class="logo"><img src="logo.png"></div>
 
 <nav>
-<button onclick="show('rentals')">Rentals</button>
-<button onclick="show('unpaid')">Today's Unpaid</button>
-<button onclick="show('summary')">Summary</button>
-<button onclick="show('trend')">Trend</button>
-<button onclick="show('players')">Players</button>
+    <button onclick="show('rentals')">Add Rental</button>
+    <button onclick="show('log')">Open Play Log</button>
+    <button onclick="show('unpaid')">Unpaid</button>
+    <button onclick="show('summary')">Summary</button>
+    <button onclick="show('trend')">Trend</button>
+    <button onclick="show('players')">Players</button>
 </nav>
 
-<!-- RENTALS -->
 <div id="rentals" class="card">
-<h3>Add Rental</h3>
+<h3 id="formTitle">Add New Rental</h3>
 
-<label>Player</label>
-<input id="player" placeholder="Type player name">
-<div id="playerList"></div>
+<label>Player Name</label>
+<input id="player" placeholder="Start typing name...">
+<div id="playerList" style="background:#ffffff;max-height:150px;overflow-y:auto; border-radius: 5px;"></div>
 
-<label>Court</label>
-<select id="court">
-<option>Court 1</option><option>Court 2</option><option>Court 3</option>
-<option>Court 4</option><option>Court 5</option>
-</select>
-
+<label>Court & Time</label>
 <div class="flex">
-<div style="flex:1">
-<div class="small">Time In</div>
-<input type="time" id="timeIn" required>
-</div>
-<div style="flex:1">
-<div class="small">Time Out</div>
-<input type="time" id="timeOut" required>
-</div>
+    <select id="court">
+        <option>Court 1</option>
+        <option>Court 2</option>
+        <option>Court 3</option>
+        <option>Court 4</option>
+        <option>Court 5</option>
+    </select>
+
+    <div style="flex:1">
+        <div class="small-label">Time In</div>
+        <input type="time" id="timeIn" required>
+    </div>
+
+    <div style="flex:1">
+        <div class="small-label">Time Out</div>
+        <input type="time" id="timeOut" required>
+    </div>
 </div>
 
 <label>Payment Method</label>
 <select id="method">
-<option>Cash</option>
-<option>GCash</option>
+    <option>Cash</option>
+    <option>GCash</option>
 </select>
 
-<label>Coach Fee (optional)</label>
-<input type="number" id="coachFee">
+<label>Coach Fee (₱)</label>
+<input type="number" id="coachFee" placeholder="0">
 
-<label><input type="checkbox" id="paid"> Mark as Paid</label>
+<label><input type="checkbox" id="paid"> Mark as Paid immediately</label>
 
-<button onclick="addRental()">Save Rental</button>
+<input type="hidden" id="editId">
+<button id="saveBtn" onclick="addRental()">Save Rental</button>
+<button id="cancelBtn" class="hidden secondary" onclick="resetForm()">Cancel Edit</button>
+</div>
 
-<hr>
+<div id="log" class="card hidden">
+<h3>Open Play Log (History)</h3>
 <div id="rentalList"></div>
 </div>
 
-<!-- TODAY UNPAID -->
 <div id="unpaid" class="card hidden">
 <h3>Today's Unpaid Rentals</h3>
 <div id="todayUnpaid"></div>
 </div>
 
-<!-- SUMMARY -->
 <div id="summary" class="card hidden">
-<h3>Summary</h3>
+<h3>Income Summary</h3>
 <select onchange="renderSummary(this.value)">
-<option value="daily">Daily</option>
-<option value="weekly">Weekly</option>
-<option value="monthly">Monthly</option>
+    <option value="daily">Daily</option>
+    <option value="weekly">Weekly</option>
+    <option value="monthly">Monthly</option>
 </select>
-<div id="summaryData"></div>
+<div id="summaryData" style="margin-top:15px; font-size:1.1rem; line-height:1.8;"></div>
 </div>
 
-<!-- TREND -->
 <div id="trend" class="card hidden">
 <h3>Monthly Income Trend</h3>
 <canvas id="chart" height="220"></canvas>
 </div>
 
-<!-- PLAYERS -->
 <div id="players" class="card hidden">
-<h3>Players</h3>
-<input id="searchPlayer" placeholder="Search player">
+<h3>Player Management</h3>
+<input id="searchPlayer" placeholder="Search player records...">
 <div id="playerManageList"></div>
+<div id="playerManageProfile"></div>
 <hr>
-<button class="danger" onclick="clearAll()">Clear All Data</button>
+<button class="danger" onclick="clearAllPlayers()">Clear All System Data</button>
 </div>
 
 <script>
+setTimeout(()=>splash.style.display="none",1500)
+
 const KEY="pickleturf"
 const load=()=>JSON.parse(localStorage.getItem(KEY))||[]
 const save=d=>localStorage.setItem(KEY,JSON.stringify(d))
 
 function show(id){
-["rentals","unpaid","summary","trend","players"].forEach(x=>document.getElementById(x).classList.add("hidden"))
-document.getElementById(id).classList.remove("hidden")
-if(id==="trend") drawChart()
+    ["rentals","log","unpaid","summary","trend","players"].forEach(x=>document.getElementById(x).classList.add("hidden"))
+    document.getElementById(id).classList.remove("hidden")
+    if(id==="trend") drawChart()
+    if(id==="log") render()
 }
 
-/* AUTOCOMPLETE (shared) */
-function playerAuto(input, listEl){
-input.addEventListener("input",()=>{
-const v=input.value.toLowerCase()
-listEl.innerHTML=""
-[...new Set(load().map(r=>r.player))]
-.filter(p=>p.toLowerCase().includes(v))
-.forEach(p=>{
-const d=document.createElement("div")
-d.textContent=p; d.className="player-item"
-d.onclick=()=>{input.value=p; listEl.innerHTML=""}
-listEl.appendChild(d)
-})
-})
-}
-playerAuto(player,playerList)
-
-/* ADD RENTAL */
-function addRental(){
-if(!player.value||!timeIn.value||!timeOut.value) return alert("Time In and Out required")
-
-const d=load()
-const s=new Date(), e=new Date()
-const [h1,m1]=timeIn.value.split(":")
-const [h2,m2]=timeOut.value.split(":")
-s.setHours(h1,m1); e.setHours(h2,m2)
-
-d.push({
-id:Date.now(),player:player.value,court:court.value,
-method:method.value,coachFee:+coachFee.value||0,
-paid:paid.checked,timeIn:s.toISOString(),timeOut:e.toISOString()
-})
-save(d)
-player.value=""; timeIn.value=""; timeOut.value=""; coachFee.value=""; paid.checked=false
-render()
+// AUTOCOMPLETE
+function autocomplete(inputElem, listContainer, callback){
+    inputElem.addEventListener("input", ()=>{
+        const val = inputElem.value.trim().toLowerCase()
+        const data = load()
+        const uniquePlayers = [...new Set(data.map(r=>r.player))]
+        listContainer.innerHTML=""
+        if(!val) return;
+        uniquePlayers
+            .filter(p=>p.toLowerCase().includes(val))
+            .forEach(p=>{
+                const div = document.createElement("div")
+                div.textContent = p
+                div.className="player-item"
+                div.onclick=()=>{inputElem.value=p; listContainer.innerHTML=""; if(callback) callback(p)}
+                listContainer.appendChild(div)
+            })
+    })
 }
 
-/* FEE CALC */
+autocomplete(document.getElementById("player"), document.getElementById("playerList"))
+autocomplete(document.getElementById("searchPlayer"), document.getElementById("playerManageList"), showPlayerManageProfile)
+
+// FEE CALCULATION
 function fee(r){
-const s=new Date(r.timeIn), e=new Date(r.timeOut)
-const mins=(e-s)/60000
-let total=Math.ceil(mins/30)*50
-let t=new Date(s)
-while(t<e){ if(t.getHours()>=18) total+=20; t.setHours(t.getHours()+1) }
-return total+(r.coachFee||0)
+    if(!r.timeOut) return 0;
+    const s = new Date(r.timeIn);
+    const e = new Date(r.timeOut);
+    const diffMins = (e - s) / 60000;
+    const halfHours = Math.ceil(diffMins / 30);
+    let total = halfHours * 50;
+    let t = new Date(s);
+    while(t < e){
+        if(t.getHours() >= 18) total += 20;
+        t.setHours(t.getHours() + 1);
+    }
+    return total + (Number(r.coachFee) || 0);
 }
 
-/* DELETE */
+// ADD / UPDATE RENTAL
+function addRental(){
+    const name=player.value.trim()
+    const eid=document.getElementById("editId").value
+    if(!name) return alert("Player required")
+    if(!timeIn.value || !timeOut.value) return alert("Time In and Time Out required")
+
+    const now = new Date();
+    const start = new Date(now.toDateString() + ' ' + timeIn.value);
+    const end = new Date(now.toDateString() + ' ' + timeOut.value);
+
+    let d = load()
+
+    if(eid){
+        const index = d.findIndex(r => r.id == eid)
+        if(index !== -1){
+            d[index] = { ...d[index], 
+                player: name, court: court.value, method: method.value, 
+                coachFee: Number(coachFee.value)||0, paid: paid.checked,
+                timeIn: start.toISOString(), timeOut: end.toISOString()
+            }
+        }
+    } else {
+        d.push({
+            id: Date.now(),
+            player: name, court: court.value, method: method.value,
+            coachFee: Number(coachFee.value)||0,
+            paid: paid.checked,
+            timeIn: start.toISOString(),
+            timeOut: end.toISOString()
+        })
+    }
+    
+    save(d)
+    resetForm()
+    show('log') // Redirect to log after saving
+}
+
+function editRental(id){
+    const d = load()
+    const r = d.find(item => item.id == id)
+    if(!r) return;
+
+    show('rentals'); // Move to form view
+
+    player.value = r.player;
+    court.value = r.court;
+    method.value = r.method;
+    coachFee.value = r.coachFee;
+    paid.checked = r.paid;
+    timeIn.value = new Date(r.timeIn).toTimeString().slice(0,5);
+    timeOut.value = new Date(r.timeOut).toTimeString().slice(0,5);
+
+    document.getElementById("editId").value = id;
+    document.getElementById("formTitle").innerText = "Edit Rental Entry";
+    document.getElementById("saveBtn").innerText = "Update Rental";
+    document.getElementById("cancelBtn").classList.remove("hidden");
+}
+
 function deleteRental(id){
-if(confirm("Delete this rental?")){
-save(load().filter(r=>r.id!==id))
-render()
-}
+    if(confirm("Permanently delete this entry?")){
+        let d = load()
+        d = d.filter(r => r.id != id)
+        save(d)
+        render()
+    }
 }
 
-/* MARK PAID */
+function resetForm(){
+    player.value="";
+    timeIn.value="";
+    timeOut.value="";
+    coachFee.value="";
+    paid.checked=false;
+    document.getElementById("editId").value = "";
+    document.getElementById("formTitle").innerText = "Add New Rental";
+    document.getElementById("saveBtn").innerText = "Save Rental";
+    document.getElementById("cancelBtn").classList.add("hidden");
+}
+
 function markPaid(id){
-const d=load(); d.find(r=>r.id===id).paid=true; save(d); render()
+    const d=load()
+    const r = d.find(r=>r.id===id)
+    if(r) r.paid=true
+    save(d)
+    render()
 }
 
-/* RENDER */
 function render(){
-rentalList.innerHTML=""; todayUnpaid.innerHTML=""
-const today=new Date().toDateString()
+    const d=load().sort((a,b) => new Date(b.timeIn) - new Date(a.timeIn)); // Newest first
+    const rentalList=document.getElementById("rentalList")
+    const todayUnpaidElem=document.getElementById("todayUnpaid")
+    rentalList.innerHTML=""
+    todayUnpaidElem.innerHTML=""
+    const today=new Date().toDateString()
 
-load().forEach(r=>{
-rentalList.innerHTML+=`
-<div>
-<strong>${r.player}</strong> | ${r.court} | ₱${fee(r)}
-<span class="badge ${r.paid?'paid':'notpaid'}">${r.paid?'Paid':'Unpaid'}</span>
-<div class="flex">
-${!r.paid?`<button onclick="markPaid(${r.id})">Mark Paid</button>`:""}
-<button class="danger" onclick="deleteRental(${r.id})">Delete</button>
-</div>
-</div><hr>`
+    d.forEach(r=>{
+        const dateStr = new Date(r.timeIn).toLocaleDateString();
+        rentalList.innerHTML+=`
+        <div class="rental-row">
+            <div>
+                <small>${dateStr}</small><br>
+                <strong>${r.player}</strong> | ${r.court}<br>
+                ₱${fee(r)} <span class="badge ${r.paid?'paid':'notpaid'}">${r.paid?'Paid':'Unpaid'}</span>
+            </div>
+            <div class="action-btns">
+                <button class="edit-btn" onclick="editRental(${r.id})">Edit</button>
+                <button class="del-btn" onclick="deleteRental(${r.id})">Del</button>
+            </div>
+        </div>`
 
-if(!r.paid && new Date(r.timeIn).toDateString()===today){
-todayUnpaid.innerHTML+=`
-<div class="flex">
-<div>${r.player}<br>${r.court} | ₱${fee(r)}</div>
-<div class="flex">
-<button onclick="markPaid(${r.id})">Paid</button>
-<button class="danger" onclick="deleteRental(${r.id})">Delete</button>
-</div>
-</div><hr>`
+        if(!r.paid && new Date(r.timeIn).toDateString()===today){
+            todayUnpaidElem.innerHTML+=`
+            <div class="flex" style="justify-content:space-between; margin-bottom:10px; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                <div><strong>${r.player}</strong><br>${r.court} | ₱${fee(r)}</div>
+                <button style="width:auto" onclick="markPaid(${r.id})">Mark Paid</button>
+            </div>`
+        }
+    })
+
+    if(!rentalList.innerHTML) rentalList.innerHTML="<p>No rentals found.</p>"
+    if(!todayUnpaidElem.innerHTML) todayUnpaidElem.innerHTML="None 🎉"
 }
-})
-if(!todayUnpaid.innerHTML) todayUnpaid.innerHTML="None 🎉"
-}
 
-/* SUMMARY */
 function renderSummary(type){
-let start=new Date()
-if(type==="weekly") start.setDate(start.getDate()-7)
-if(type==="monthly") start.setMonth(start.getMonth()-1)
-let t=0,p=0
-load().forEach(r=>{
-if(!r.timeOut) return
-const d=new Date(r.timeIn)
-if(type==="daily"&&d.toDateString()!==new Date().toDateString())return
-if(type!=="daily"&&d<start)return
-const f=fee(r); t+=f; if(r.paid)p+=f
-})
-summaryData.innerHTML=`Total ₱${t}<br>Paid ₱${p}<br>Unpaid ₱${t-p}`
+    const d=load()
+    let start=new Date()
+    if(type==="weekly") start.setDate(start.getDate()-7)
+    if(type==="monthly") start.setMonth(start.getMonth()-1)
+    let total=0,paidVal=0
+    d.forEach(r=>{
+        if(!r.timeOut) return
+        const t=new Date(r.timeIn)
+        if(type==="daily" && t.toDateString()!==new Date().toDateString()) return
+        if(type!=="daily" && t<start) return
+        const f=fee(r)
+        total+=f; if(r.paid) paidVal+=f
+    })
+    summaryData.innerHTML=`
+        <b>Gross Total:</b> ₱${total}<br>
+        <span style="color:green"><b>Total Paid:</b> ₱${paidVal}</span><br>
+        <span style="color:red"><b>Total Unpaid:</b> ₱${total-paidVal}</span>
+    `
 }
 
-/* TREND */
 function drawChart(){
-const ctx=chart.getContext("2d")
-ctx.clearRect(0,0,chart.width,chart.height)
-const m={}
-load().forEach(r=>{
-if(!r.timeOut) return
-const k=new Date(r.timeIn).toLocaleString("default",{month:"short"})
-m[k]=(m[k]||0)+fee(r)
-})
-const keys=Object.keys(m).slice(-6)
-const max=Math.max(...Object.values(m),1)
-keys.forEach((k,i)=>{
-const h=m[k]/max*150, x=40+i*50
-ctx.fillStyle="#F2C94C"
-ctx.fillRect(x,180-h,30,h)
-ctx.fillStyle="#000"
-ctx.fillText(`₱${m[k]}`,x-5,170-h)
-ctx.fillText(k,x,200)
-})
+    const ctx=chart.getContext("2d")
+    ctx.clearRect(0,0,chart.width,chart.height)
+    const d=load(), m={}
+    d.forEach(r=>{
+        const k=new Date(r.timeIn).toLocaleString("default",{month:"short"})
+        m[k]=(m[k]||0)+fee(r)
+    })
+    const keys=Object.keys(m).slice(-6)
+    const max=Math.max(...Object.values(m),1)
+    keys.forEach((k,i)=>{
+        const h=m[k]/max*150; const x=40+i*50
+        ctx.fillStyle="#F2C94C"; ctx.fillRect(x,180-h,30,h)
+        ctx.fillStyle="#000"; ctx.fillText(`₱${m[k]}`,x-5,170-h); ctx.fillText(k,x,200)
+    })
 }
 
-/* PLAYERS */
-playerAuto(searchPlayer,playerManageList)
-
-function clearAll(){
-if(confirm("⚠️ This will delete ALL data. Continue?")){
-localStorage.removeItem(KEY); render()
+function showPlayerManageProfile(playerName){
+    const data=load().filter(r=>r.player.toLowerCase()===playerName.toLowerCase())
+    if(!data.length){document.getElementById("playerManageProfile").innerHTML="No data"; return}
+    let total=0,paidVal=0,games=0
+    data.forEach(r=>{
+        games++; const f=fee(r); total+=f; if(r.paid) paidVal+=f
+    })
+    document.getElementById("playerManageProfile").innerHTML=`
+    <div class="card" style="margin-top:10px">
+        <strong>${playerName}</strong><br>
+        Total Games: ${games}<br>
+        Total Spent: ₱${total}<br>
+        Paid: ₱${paidVal}<br>
+        Unpaid: ₱${total-paidVal}<br><br>
+        <button class="danger" onclick="deletePlayerRecords('${playerName}')">Delete All Player Records</button>
+    </div>`
 }
+
+function deletePlayerRecords(name){
+    if(confirm("Delete all records for "+name+"? This cannot be undone.")){
+        let d=load().filter(r=>r.player.toLowerCase()!==name.toLowerCase())
+        save(d); render(); 
+        document.getElementById("playerManageProfile").innerHTML = "";
+    }
+}
+
+function clearAllPlayers(){
+    if(confirm("⚠️ This will remove ALL data. Continue?")){
+        localStorage.removeItem(KEY)
+        render()
+        document.getElementById("playerManageProfile").innerHTML=""
+    }
 }
 
 render()
