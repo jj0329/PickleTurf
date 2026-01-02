@@ -91,20 +91,33 @@ th{background: #eee;}
         <input id="player" placeholder="Start typing name...">
         <div id="playerList" class="lookup-list"></div>
     </div>
+    
     <label>Court & Time</label>
     <div class="flex">
-        <select id="court">
-            <option>Court 1</option><option>Court 2</option><option>Court 3</option><option>Court 4</option><option>Court 5</option>
-        </select>
-        <div style="flex:1"><input type="time" id="timeIn"></div>
-        <div style="flex:1"><input type="time" id="timeOut"></div>
+        <div style="flex:1">
+            <label class="small-label">Court</label>
+            <select id="court">
+                <option>Court 1</option><option>Court 2</option><option>Court 3</option><option>Court 4</option><option>Court 5</option>
+            </select>
+        </div>
+        <div style="flex:1">
+            <label class="small-label">Time In</label>
+            <input type="time" id="timeIn">
+        </div>
+        <div style="flex:1">
+            <label class="small-label">Time Out</label>
+            <input type="time" id="timeOut">
+        </div>
     </div>
+
     <div class="flex">
         <div style="flex:1"><label class="small-label">Rate / Hour (₱)</label><input type="number" id="hourlyRate" value="100"></div>
         <div style="flex:1"><label class="small-label">Coach Fee (₱)</label><input type="number" id="coachFee" placeholder="0"></div>
     </div>
+    
     <label>Payment Method</label>
     <select id="method"><option>Cash</option><option>GCash</option></select>
+    
     <label><input type="checkbox" id="paid"> Mark as Paid immediately</label>
     <input type="hidden" id="editId">
     <button id="saveBtn" onclick="addRental()">Save Rental</button>
